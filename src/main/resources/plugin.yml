@@ -1,0 +1,8 @@
+name: fx
+version: '${version}'
+main: mumeinosato.fx.Fx
+api-version: 1.19
+
+commands:
+  fx:
+    description: /fx buy [数] で買うことができ /fx sell [数] で売ることができます
