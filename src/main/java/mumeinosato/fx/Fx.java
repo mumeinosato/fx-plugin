@@ -1,4 +1,4 @@
-﻿package mumeinosato.fx;
+package mumeinosato.fx;
 import mumeinosato.fx.command.CommandClass;
 import mumeinosato.fx.sql.SQL;
 

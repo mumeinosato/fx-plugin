@@ -1,8 +1,10 @@
 package mumeinosato.fx.command;
 
+import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 
 public class CommandClass implements CommandExecutor {
     @Override
@@ -23,6 +25,8 @@ public class CommandClass implements CommandExecutor {
                             return false;
                         }
                         // value 処理
+                        Player player = (Player) sender;
+                        String uuid = player.getUniqueId().toString();
                     }
                 } else if (args[0].equalsIgnoreCase("sell")) {
                     if(args.length < 2) {
@@ -35,7 +39,11 @@ public class CommandClass implements CommandExecutor {
                             sender.sendMessage("数は数値で指定してください");
                         }
                         // value 処理
+                        Player player = (Player) sender;
+                        String uuid = player.getUniqueId().toString();
                     }
+                } else if (args[0].equalsIgnoreCase("show")) {
+                    //処理
                 } else {
                     sender.sendMessage("コマンドが見つかりません");
                 }
