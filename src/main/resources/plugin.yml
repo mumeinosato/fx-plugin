@@ -6,18 +6,5 @@ api-version: 1.19
 commands:
   fx:
     description: "FX command"
-    usage: "/fx <buy|sell|show>"
-    ##permission: fx.command.use
-    subcommands:
-      buy:
-        description: "Buy FX"
-        usage: "/fx buy <amount>"
-        ##permission: fx.command.buy
-      sell:
-        description: "Sell FX"
-        usage: "/fx sell <amount>"
-        ##permission: fx.command.sell
-      show:
-        description: "Show FX information"
-        usage: "/fx show"
-        ##permission: fx.command.show
+  fx.show:
+    description: "Rate show command"

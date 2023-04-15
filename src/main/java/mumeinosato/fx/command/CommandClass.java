@@ -1,4 +1,5 @@
 package mumeinosato.fx.command;
+import static mumeinosato.fx.command.getfx.getRate;
 
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
@@ -6,7 +7,15 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
+import java.io.IOException;
+import java.util.Timer;
+import java.util.TimerTask;
+
 public class CommandClass implements CommandExecutor {
+
+    private Timer timer;
+    private int counter = 0;
+
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if(command.getName().equalsIgnoreCase("fx")){
@@ -44,6 +53,7 @@ public class CommandClass implements CommandExecutor {
                     }
                 } else if (args[0].equalsIgnoreCase("show")) {
                     //処理
+                    startTimer(sender);
                 } else {
                     sender.sendMessage("コマンドが見つかりません");
                 }
@@ -51,4 +61,24 @@ public class CommandClass implements CommandExecutor {
         }
         return false;
     }
+
+    private void startTimer(CommandSender sender) {
+        timer = new Timer();
+        TimerTask task = new TimerTask() {
+            @Override
+            public void run() {
+                if (counter >=10) {
+                    timer.cancel();
+                    timer = null;
+                    return;
+                }
+                getfx fx = new getfx();
+                double rate = fx.getExchangeRate();
+                sender.sendMessage(String.valueOf(rate));
+                counter++;
+            }
+        };
+        timer.scheduleAtFixedRate(task, 0, 1000);
+    }
+
 }
