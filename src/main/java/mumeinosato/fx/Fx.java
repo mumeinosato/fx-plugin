@@ -11,11 +11,21 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.sql.SQLException;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.function.Supplier;
+
+import static mumeinosato.fx.command.fxdata.setfx;
 
 public final class  Fx extends JavaPlugin {
-    private File dbFile;
+    public File dbFile;
     private FileConfiguration config;
     private SQL sql;
+    private Timer timer;
+
+    public static Fx getInstance() {
+        return JavaPlugin.getPlugin(Fx.class);
+    }
 
     @Override
     public void onEnable() {
@@ -50,6 +60,8 @@ public final class  Fx extends JavaPlugin {
             }
         }
 
+        String dbPath = dbFile.getAbsolutePath();
+
         try {
             sql = new SQL();
             sql.SQLiteConnector(dbFile.getAbsolutePath());
@@ -59,6 +71,18 @@ public final class  Fx extends JavaPlugin {
         }
 
         getCommand("fx").setExecutor(new CommandClass());
+
+
+
+        timer = new Timer();
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                double rate = setfx(dbPath);
+                //getLogger().info(String.valueOf(rate));
+            }
+        }, 0, 10000);
+
     }
 
     @Override
@@ -83,5 +107,10 @@ public final class  Fx extends JavaPlugin {
 
     public SQL getSql() {
         return sql;
+    }
+
+
+    public String getDBPath() {
+        return dbFile.getAbsolutePath();
     }
 }

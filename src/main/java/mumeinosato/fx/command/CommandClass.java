@@ -1,20 +1,27 @@
 package mumeinosato.fx.command;
-import static mumeinosato.fx.command.getfx.getRate;
+import static mumeinosato.fx.command.fxdata.getfx;
+import mumeinosato.fx.Fx;
 
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scoreboard.*;
 
-import java.io.IOException;
+import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
 public class CommandClass implements CommandExecutor {
 
-    private Timer timer;
-    private int counter = 0;
+    private Map<String, Boolean> showToggleMap = new HashMap<>();
+
+    Fx plugin = Fx.getInstance();
+    String dbPath = plugin.getDBPath();
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
@@ -52,8 +59,44 @@ public class CommandClass implements CommandExecutor {
                         String uuid = player.getUniqueId().toString();
                     }
                 } else if (args[0].equalsIgnoreCase("show")) {
-                    //処理
-                    startTimer(sender);
+                    if (!(sender instanceof Player)) {
+                        sender.sendMessage("このコマンドはプレイヤーしか実行できません");
+                        return false;
+                    }
+                    Player player = (Player) sender;
+                    String uuid = player.getUniqueId().toString();
+                    ScoreboardManager scoreboardManager = Bukkit.getScoreboardManager();
+                    Scoreboard scoreboard = scoreboardManager.getNewScoreboard();
+                    Objective objective = scoreboard.registerNewObjective("fxscore", "dummy", "Scoreboard Title");
+                    objective.setDisplaySlot(DisplaySlot.SIDEBAR);
+                    showToggleMap.putIfAbsent(uuid, false);
+                    boolean isToggledOn = showToggleMap.get(uuid);
+                    if (!isToggledOn) {
+                        final double[] rate = {getfx(dbPath)};
+                        Score score = objective.getScore("");
+                        score.setScore(1);
+                        Timer timer = new Timer();
+                        TimerTask task = new TimerTask() {
+                            @Override
+                            public void run() {
+                                double newRate = getfx(dbPath);
+                                if (rate[0] != newRate) {
+                                    rate[0] = newRate;
+                                    Bukkit.getScheduler().runTask(plugin, () -> {
+                                        score.setScore((int) rate[0]);
+                                    });
+                                }
+                            }
+                        };
+                        timer.schedule(task, 0L, 10000L);
+                        player.setScoreboard(scoreboard);
+                        showToggleMap.put(uuid, true);
+                        sender.sendMessage("Scoreboardを表示しました");
+                    } else {
+                        player.setScoreboard(scoreboardManager.getMainScoreboard());
+                        showToggleMap.put(uuid, false);
+                        sender.sendMessage("Scoreboardを非表示にしました");
+                    }
                 } else {
                     sender.sendMessage("コマンドが見つかりません");
                 }
@@ -61,24 +104,4 @@ public class CommandClass implements CommandExecutor {
         }
         return false;
     }
-
-    private void startTimer(CommandSender sender) {
-        timer = new Timer();
-        TimerTask task = new TimerTask() {
-            @Override
-            public void run() {
-                if (counter >=10) {
-                    timer.cancel();
-                    timer = null;
-                    return;
-                }
-                getfx fx = new getfx();
-                double rate = fx.getExchangeRate();
-                sender.sendMessage(String.valueOf(rate));
-                counter++;
-            }
-        };
-        timer.scheduleAtFixedRate(task, 0, 1000);
-    }
-
 }
