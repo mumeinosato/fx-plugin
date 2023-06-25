@@ -1,20 +1,22 @@
 package mumeinosato.fx.command;
 import static mumeinosato.fx.command.fxdata.getfx;
+
+import com.earth2me.essentials.api.Economy;
+import com.earth2me.essentials.api.NoLoanPermittedException;
+import com.earth2me.essentials.api.UserDoesNotExistException;
 import mumeinosato.fx.Fx;
 
+import mumeinosato.fx.sql.SQL;
+import net.ess3.api.MaxMoneyException;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scoreboard.*;
 
-import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.math.BigDecimal;
+import java.util.*;
 
 public class CommandClass implements CommandExecutor {
 
@@ -43,6 +45,26 @@ public class CommandClass implements CommandExecutor {
                         // value 処理
                         Player player = (Player) sender;
                         String uuid = player.getUniqueId().toString();
+                        double rate = getfx(dbPath);
+                        BigDecimal amount = BigDecimal.valueOf((rate * value));
+                        try {
+                            Economy.subtract(UUID.fromString(uuid), amount);
+                            sender.sendMessage( amount + "円で株を" + value + "つ購入しました");
+                            SQL sql = new SQL();
+                            sql.addfx(uuid, value);
+                        } catch (NoLoanPermittedException e) {
+                            // ユーザーの残高が負の値になることが許可されていない場合の処理
+                            sender.sendMessage("残高が足りません");
+                        } catch (ArithmeticException e) {
+                            // 残高からの引き算が失敗した場合の処理
+                            sender.sendMessage("残高の引き出しに失敗しました");
+                        } catch (MaxMoneyException e) {
+                            // 残高が最大金額を超える場合の処理
+                            sender.sendMessage("残高が最大金額を超えます");
+                        } catch (UserDoesNotExistException e) {
+                            // 指定したユーザーが存在しない場合の処理
+                            sender.sendMessage("ユーザーが存在しません");
+                        }
                     }
                 } else if (args[0].equalsIgnoreCase("sell")) {
                     if(args.length < 2) {
@@ -67,14 +89,14 @@ public class CommandClass implements CommandExecutor {
                     String uuid = player.getUniqueId().toString();
                     ScoreboardManager scoreboardManager = Bukkit.getScoreboardManager();
                     Scoreboard scoreboard = scoreboardManager.getNewScoreboard();
-                    Objective objective = scoreboard.registerNewObjective("fxscore", "dummy", "Scoreboard Title");
+                    Objective objective = scoreboard.registerNewObjective("fxscore", "dummy", "現在のレート");
                     objective.setDisplaySlot(DisplaySlot.SIDEBAR);
                     showToggleMap.putIfAbsent(uuid, false);
                     boolean isToggledOn = showToggleMap.get(uuid);
                     if (!isToggledOn) {
                         final double[] rate = {getfx(dbPath)};
                         Score score = objective.getScore("");
-                        score.setScore(1);
+                        score.setScore(0);
                         Timer timer = new Timer();
                         TimerTask task = new TimerTask() {
                             @Override
@@ -91,11 +113,11 @@ public class CommandClass implements CommandExecutor {
                         timer.schedule(task, 0L, 10000L);
                         player.setScoreboard(scoreboard);
                         showToggleMap.put(uuid, true);
-                        sender.sendMessage("Scoreboardを表示しました");
+                        sender.sendMessage("現在のレートを表示しました\n表示には少し時間がかかります");
                     } else {
                         player.setScoreboard(scoreboardManager.getMainScoreboard());
                         showToggleMap.put(uuid, false);
-                        sender.sendMessage("Scoreboardを非表示にしました");
+                        sender.sendMessage("現在のレートを非表示にしました");
                     }
                 } else {
                     sender.sendMessage("コマンドが見つかりません");
