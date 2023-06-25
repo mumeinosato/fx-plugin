@@ -1,8 +1,13 @@
 package mumeinosato.fx.sql;
+import mumeinosato.fx.Fx;
+
 import java.sql.*;
 
 public class SQL {
     private Connection connection;
+
+    Fx plugin = Fx.getInstance();
+    String dbPath = plugin.getDBPath();
 
     public void SQLiteConnector(String dbPath) throws SQLException {
         this.connection = DriverManager.getConnection("jdbc:sqlite:" + dbPath);
@@ -28,7 +33,7 @@ public class SQL {
         stmt.execute(sqlRates);
     }
 
-    public void updaterate(String dbPath, double rate) {
+    public void updaterate(double rate) {
         try {
             SQLiteConnector(dbPath);
             createTable();
@@ -57,7 +62,7 @@ public class SQL {
             e.printStackTrace();
         }
     }
-    public double getRate(String dbPath) {
+    public double getRate() {
         try {
             SQLiteConnector(dbPath);
 
@@ -76,6 +81,36 @@ public class SQL {
         }  catch (SQLException e) {
             e.printStackTrace();
             return Double.NaN;
+        }
+    }
+
+    public void addfx(String uuid, int value) {
+        try {
+            SQLiteConnector(dbPath);
+            String selectSql = "SELECT * FROM users";
+            PreparedStatement pstmt = connection.prepareStatement(selectSql);
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                // If data exists for the given UUID, update the fx value
+                double currentFx = rs.getDouble("fx");
+                double newFx = currentFx + value;
+
+                String updateSql = "UPDATE users SET fx = ? WHERE uuid = ?";
+                PreparedStatement updateStmt = connection.prepareStatement(updateSql);
+                updateStmt.setDouble(1, newFx);
+                updateStmt.setString(2, uuid);
+                updateStmt.executeUpdate();
+            } else {
+                // If data doesn't exist for the given UUID, insert a new row
+                String insertSql = "INSERT INTO users (uuid, fx) VALUES (?, ?)";
+                PreparedStatement insertStmt = connection.prepareStatement(insertSql);
+                insertStmt.setString(1, uuid);
+                insertStmt.setDouble(2, value);
+                insertStmt.executeUpdate();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 
