@@ -72,7 +72,7 @@ public class SQL {
 
             if (rs.next()) {
                 double rate = rs.getDouble("rate");
-                closeConnection();;
+                closeConnection();
                 return rate;
             } else {
                 closeConnection();;
@@ -114,6 +114,77 @@ public class SQL {
         }
     }
 
+    public int pgetfx(String uuid) {
+        try {
+            SQLiteConnector(dbPath);
+            String selectSql = "SELECT * FROM users WHERE uuid = ?";
+            PreparedStatement pstmt = connection.prepareStatement(selectSql);
+            pstmt.setString(1, uuid);
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                // Data exists for the given UUID
+                closeConnection();
+                return 1;
+            } else {
+                // Data doesn't exist for the given UUID
+                closeConnection();
+                return 0;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return 0;
+        }
+    }
+
+    public void subtractfx(String uuid, int value) {
+        try {
+            SQLiteConnector(dbPath);
+            String selectSql = "SELECT * FROM users WHERE uuid = ?";
+            PreparedStatement pstmt = connection.prepareStatement(selectSql);
+            pstmt.setString(1, uuid);
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                // If data exists for the given UUID, update the fx value
+                double currentFx = rs.getDouble("fx");
+                double newFx = currentFx - value;
+
+                String updateSql = "UPDATE users SET fx = ? WHERE uuid = ?";
+                PreparedStatement updateStmt = connection.prepareStatement(updateSql);
+                updateStmt.setDouble(1, newFx);
+                updateStmt.setString(2, uuid);
+                updateStmt.executeUpdate();
+            }
+            closeConnection();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public double checkfx(String uuid) {
+        try {
+            SQLiteConnector(dbPath);
+            String selectSql = "SELECT * FROM users WHERE uuid = ?";
+            PreparedStatement pstmt = connection.prepareStatement(selectSql);
+            pstmt.setString(1, uuid);
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                // Data exists for the given UUID
+                double fx = rs.getDouble("fx");
+                closeConnection();
+                return fx;
+            } else {
+                // Data doesn't exist for the given UUID
+                closeConnection();
+                return Double.NaN;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return Double.NaN;
+        }
+    }
 
     public  Connection getConnection() {
         return this.connection;
@@ -125,4 +196,3 @@ public class SQL {
         }
     }
 }
-
